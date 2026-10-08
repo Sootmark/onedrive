@@ -1,0 +1,25 @@
+plaso.tsv.gz: what plaso (the log2timeline/plaso:20260720 Docker image) reads
+from the logs in tests/fixtures/plaso/ (the .odlgz and the four SkyDrive
+logs, without ObfuscationStringMap.txt) with its parsers onedrive_log,
+text/skydrive_log_v1 and text/skydrive_log_v2 (psort -o json_line), one line
+per event: kind, file, time (Unix milliseconds), then the source file,
+function, raw and decoded parameters (sync engine) or the level, module,
+source and detail (SkyDrive; version 2 details with whitespace collapsed).
+Written from plaso's output, not from this crate.
+
+plaso_map.tsv.gz: the same for the .odlgz read with ObfuscationStringMap.txt
+beside it, which plaso uses to restore the obfuscated words.
+
+Commands (on a Linux host with Docker), for plaso.tsv.gz with the five logs
+in /tmp/smo/onedrive/in/:
+
+    sudo docker run --rm -v /tmp/smo/onedrive:/data log2timeline/plaso:20260720 log2timeline --status_view none -q --parsers 'onedrive_log,text/skydrive_log_v1,text/skydrive_log_v2' --storage-file /data/out.plaso /data/in
+    sudo docker run --rm -v /tmp/smo/onedrive:/data log2timeline/plaso:20260720 psort --status_view none -q -o json_line -w /data/out.jsonl /data/out.plaso
+    python3 -I tests/oracle/plaso_tsv.py out.jsonl | gzip -9n > tests/oracle/plaso.tsv.gz
+
+and for plaso_map.tsv.gz with the .odlgz and ObfuscationStringMap.txt in
+/tmp/smo/onedrive_map/in/:
+
+    sudo docker run --rm -v /tmp/smo/onedrive_map:/data log2timeline/plaso:20260720 log2timeline --status_view none -q --parsers 'onedrive_log' --storage-file /data/out.plaso /data/in
+    sudo docker run --rm -v /tmp/smo/onedrive_map:/data log2timeline/plaso:20260720 psort --status_view none -q -o json_line -w /data/out.jsonl /data/out.plaso
+    python3 -I tests/oracle/plaso_tsv.py out.jsonl | gzip -9n > tests/oracle/plaso_map.tsv.gz
